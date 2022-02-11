@@ -1,0 +1,12 @@
+#%RAML 1.0 DataType
+type: object
+displayName: Partner DataType
+description: Partner Details
+properties:
+  partnerId?: integer
+  partnerName: string
+  services?: string
+  numberOfFlights?: integer
+examples:
+  example1: !include ../examples/PartnerRegistration1.raml
+  example2: !include ../examples/PartnerRegistration2.raml

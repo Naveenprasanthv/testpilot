@@ -1,0 +1,68 @@
+#%RAML 1.0
+title: FlightBooking
+
+mediaType:
+  - application/json
+  - application/xml
+protocols:
+  - HTTPS
+  - HTTP
+
+securitySchemes:
+  clientIDSecret: !include Security/ClientSecurityScheme.raml
+securedBy:
+  - clientIDSecret
+
+documentation:
+  - !include documentation/FlightBookingDoc.raml
+
+uses:
+  traitsLib: libraries/TraitsLibrary.raml
+  resTypesLib: libraries/ResourceTypesLibrary.raml
+  dataTypesLib: libraries/DataTypesLibrary.raml
+  
+/partners:
+  type: resTypesLib.collection
+  get:
+  post:
+
+  /{partnersId}:
+    type: resTypesLib.member
+    get:
+    patch:
+    delete:
+        
+/flights:
+  type: resTypesLib.collection
+  get:
+    queryParameters:
+      origin?:
+        enum:
+          - HYD
+          - MAD
+          - DEL
+          - BLR
+      destination?:
+        enum:
+          - HYD
+          - MAD
+          - DEL
+          - BLR
+      departureDate?:
+        type: date-only
+  post:
+  /{flightsId}:
+    type: resTypesLib.member
+    get:
+    patch:
+    delete:
+
+/bookings:
+  type: resTypesLib.collection
+  get:
+  post:
+  /{bookingId}:
+    type: resTypesLib.member
+    get:
+    patch:
+    delete:

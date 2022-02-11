@@ -1,0 +1,272 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd ">
+    <apikit:config name="flightbooking-config" api="flightbooking.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+    <flow name="flightbooking-main">
+        <http:listener path="/api/*" config-ref="HTTP_Listener_config">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body><![CDATA[#[payload]]]></http:body>
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:router config-ref="flightbooking-config" />
+        <error-handler>
+            <on-error-propagate type="APIKIT:BAD_REQUEST">
+                <ee:transform>
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Bad request"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">400</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_FOUND">
+                <ee:transform>
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">404</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:METHOD_NOT_ALLOWED">
+                <ee:transform>
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Method not allowed"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">405</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_ACCEPTABLE">
+                <ee:transform>
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not acceptable"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">406</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:UNSUPPORTED_MEDIA_TYPE">
+                <ee:transform>
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Unsupported media type"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">415</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_IMPLEMENTED">
+                <ee:transform>
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not Implemented"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">501</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+    <flow name="flightbooking-console">
+        <http:listener path="/console/*" config-ref="HTTP_Listener_config">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body><![CDATA[#[payload]]]></http:body>
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:console config-ref="flightbooking-config" />
+        <error-handler>
+            <on-error-propagate type="APIKIT:NOT_FOUND">
+                <ee:transform>
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">404</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+    <flow name="delete:\bookings\(bookingId):flightbooking-config">
+        <ee:transform doc:name="Transform Message" doc:id="158b2588-10d6-489b-9119-0012fe8c8a14" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[attributes.uriParams.'bookingId']]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<flow-ref doc:name="Flow Reference" doc:id="44bff8a8-9e3d-485e-8858-56739598c262" name="DeleteBookingById"/>
+    </flow>
+    <flow name="delete:\flights\(flightsId):flightbooking-config">
+        <flow-ref doc:name="Flow Reference" doc:id="51701ab4-4a47-45ef-829f-f8c2b1ba21b8" name="deleteFlightsById"/>
+    </flow>
+    <flow name="delete:\partners\(partnersId):flightbooking-config">
+        <flow-ref doc:name="Flow Reference" doc:id="9fdc9853-68ff-4c7f-94c2-c28e87240247" name="DeltePartnerById"/>
+    </flow>
+    <flow name="patch:\bookings\(bookingId):application\json:flightbooking-config">
+        <flow-ref doc:name="Flow Reference" doc:id="95fba6fb-0586-4710-afbd-321b17b34e62" name="updateBookingById"/>
+    </flow>
+    <flow name="patch:\bookings\(bookingId):application\xml:flightbooking-config">
+        <ee:transform>
+            <ee:variables>
+                <ee:set-variable variableName="bookingId">attributes.uriParams.'bookingId'</ee:set-variable>
+            </ee:variables>
+        </ee:transform>
+        <ee:transform>
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  code: 404,
+  reasonPhrase: "Not Found",
+  details: "The requested resource is not found"
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+    <flow name="patch:\flights\(flightsId):application\json:flightbooking-config">
+        <flow-ref doc:name="Flow Reference" doc:id="b91ea2e7-ce8e-47bb-97b3-8bdafe051e7d" name="UpdateFlightsById"/>
+    </flow>
+    <flow name="patch:\flights\(flightsId):application\xml:flightbooking-config">
+        <ee:transform>
+            <ee:variables>
+                <ee:set-variable variableName="flightsId">attributes.uriParams.'flightsId'</ee:set-variable>
+            </ee:variables>
+        </ee:transform>
+        <ee:transform>
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  code: 404,
+  reasonPhrase: "Not Found",
+  details: "The requested resource is not found"
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+    <flow name="patch:\partners\(partnersId):application\json:flightbooking-config">
+        <flow-ref doc:name="Flow Reference" doc:id="40f21322-7285-48a6-91bc-baa6c470ca57" name="UpdatePartnerById"/>
+    </flow>
+    <flow name="patch:\partners\(partnersId):application\xml:flightbooking-config">
+		<ee:transform>
+            <ee:variables>
+                <ee:set-variable variableName="partnersId">attributes.uriParams.'partnersId'</ee:set-variable>
+            </ee:variables>
+        </ee:transform>
+        <ee:transform>
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  code: 404,
+  reasonPhrase: "Not Found",
+  details: "The requested resource is not found"
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+    <flow name="get:\bookings\(bookingId):flightbooking-config">
+        <flow-ref doc:name="Flow Reference" doc:id="cf021864-9075-4e02-bfa9-056b11cb7d40" name="getBookingsById"/>
+    </flow>
+    <flow name="get:\bookings:flightbooking-config">
+        <flow-ref doc:name="Flow Reference" doc:id="a11438fd-93da-4e2a-bd49-521dbf1bf6e9" name="getBookings"/>
+    </flow>
+    <flow name="get:\flights\(flightsId):flightbooking-config">
+		<flow-ref doc:name="Flow Reference" doc:id="a8e1d959-795a-4942-9c34-f4cdfeff51c3" name="getFlightsById"/>
+    </flow>
+    <flow name="get:\flights:flightbooking-config">
+        <flow-ref doc:name="Flow Reference" doc:id="ca505525-0f8f-4e5e-ae58-0addaaa9dd26" name="getFlights"/>
+    </flow>
+    <flow name="get:\partners\(partnersId):flightbooking-config">
+        <flow-ref doc:name="Flow Reference" doc:id="754e83a3-2e83-4382-90ea-90d5980ee3cc" name="getPartnerById"/>
+    </flow>
+    <flow name="get:\partners:flightbooking-config">
+        <flow-ref doc:name="Flow Reference" doc:id="45c33486-e52e-4e1b-a536-88188c31aa87" name="getPartners"/>
+    </flow>
+    <flow name="post:\bookings:application\json:flightbooking-config">
+        <flow-ref doc:name="Flow Reference" doc:id="2c508820-7575-4a73-a7a4-b059ca394da1" name="postBookings"/>
+    </flow>
+    <flow name="post:\bookings:application\xml:flightbooking-config">
+        <ee:transform>
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  code: 404,
+  reasonPhrase: "Not Found",
+  details: "The requested resource is not found"
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+    <flow name="post:\flights:application\json:flightbooking-config">
+        <flow-ref doc:name="Flow Reference" doc:id="199ce795-5372-464d-b753-89af3d66e674" name="postFlights"/>
+    </flow>
+    <flow name="post:\flights:application\xml:flightbooking-config">
+        <ee:transform>
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  code: 404,
+  reasonPhrase: "Not Found",
+  details: "The requested resource is not found"
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+    <flow name="post:\partners:application\json:flightbooking-config">
+        <flow-ref doc:name="Flow Reference" doc:id="bd391c28-9426-49d0-9d8f-0228ef74f621" name="postPartners"/>
+    </flow>
+    <flow name="post:\partners:application\xml:flightbooking-config">
+        <ee:transform>
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  code: 404,
+  reasonPhrase: "Not Found",
+  details: "The requested resource is not found"
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+</mule>
