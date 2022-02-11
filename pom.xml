@@ -51,6 +51,10 @@
 			<artifactId>mule-apikit-module</artifactId>
 			<version>1.5.8</version>
 			<classifier>mule-plugin</classifier>
+		</dependency>
+	</dependencies>
+			<configuration>
+				<classifier>mule-application</classifier>
 					<cloudHubDeployment>
 						<uri>https://anypoint.mulesoft.com</uri>
 						<muleVersion>${muleVersion}</muleVersion>
@@ -66,8 +70,7 @@
 							<anypoint.platform.client_secret>${anypoint.platform.client_secret}</anypoint.platform.client_secret>
 						</properties>
 					</cloudHubDeployment>
-		</dependency>
-	</dependencies>
+                </configuration>
 
 	<repositories>
 		<repository>
